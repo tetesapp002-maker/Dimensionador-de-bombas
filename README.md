@@ -83,13 +83,6 @@
                     Dimensionador Conab<span class="text-green-500 text-4xl">+</span>
                 </h1>
                 <div class="flex items-center gap-4">
-                    <!-- Search -->
-                    <div class="hidden md:flex items-center bg-white/10 rounded-lg px-3 py-2">
-                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input type="text" id="globalSearch" placeholder="Buscar bomba..." class="bg-transparent border-none outline-none text-white placeholder-gray-300 ml-2 w-48">
-                    </div>
                     <!-- Firebase Status -->
                     <div id="firebaseStatus" class="hidden px-3 py-1 rounded-full text-xs font-semibold">
                         <span id="statusIcon">●</span> <span id="statusText">Offline</span>
@@ -1438,22 +1431,7 @@
             });
         });
 
-        // ==================== GLOBAL SEARCH ====================
-        document.getElementById('globalSearch').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            if (query.length > 0) {
-                bombasFiltradas = bombas.filter(b => 
-                    b.marca.toLowerCase().includes(query) ||
-                    b.modelo.toLowerCase().includes(query) ||
-                    b.codigo.toLowerCase().includes(query) ||
-                    `${b.potencia}cv`.includes(query)
-                );
-            } else {
-                bombasFiltradas = [...bombas];
-            }
-            renderBombas();
-            updateChart();
-        });
+
 
         // ==================== FILTERS ====================
         function populateFilters() {
@@ -2697,84 +2675,237 @@
 
             try {
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
+                const doc = new jsPDF('p', 'mm', 'a4'); // Formato retrato A4
                 const hoje = new Date().toLocaleDateString('pt-BR');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 15;
+                const contentWidth = pageWidth - (margin * 2);
 
+                // Calcular largura de cada coluna de bomba
+                const numBombas = bombasCompare.length;
+                const bombaColWidth = contentWidth / numBombas;
+
+                // ===================== PÁGINA 1: HEADER E FOTOS =====================
                 // Header
                 doc.setFillColor(30, 58, 95);
-                doc.rect(0, 0, 297, 30, 'F');
+                doc.rect(0, 0, pageWidth, 25, 'F');
                 doc.setTextColor(255, 255, 255);
-                doc.setFontSize(20);
-                doc.text('Dimensionador Conab', 15, 15);
+                doc.setFontSize(18);
+                doc.text('Dimensionador Conab', margin, 14);
                 doc.setTextColor(34, 197, 94);
-                doc.text('+', 85, 15);
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(10);
-                doc.text('Comparacao de Bombas', 15, 24);
-                doc.text('Gerado em: ' + hoje, 245, 24);
-
-                let y = 40;
-
-                // Table Header
-                doc.setFillColor(30, 58, 95);
-                doc.rect(15, y, 267, 10, 'F');
+                doc.text('+', 78, 14);
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(9);
-                doc.setFont(undefined, 'bold');
-                doc.text('Caracteristica', 18, y + 7);
-                
-                const colWidth = 267 / (bombasCompare.length + 1);
-                bombasCompare.forEach((b, i) => {
-                    const x = 15 + colWidth * (i + 1);
-                    doc.text(b.marca + ' ' + b.modelo, x + 3, y + 7);
-                });
+                doc.text('Comparacao de Bombas', margin, 21);
+                doc.text('Gerado em: ' + hoje, pageWidth - margin - 35, 21);
 
+                let y = 35;
+
+                // ===================== SEÇÃO: FOTOS E IDENTIFICAÇÃO =====================
+                doc.setFillColor(30, 58, 95);
+                doc.rect(margin, y, contentWidth, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('IDENTIFICACAO DOS EQUIPAMENTOS', margin + 3, y + 5.5);
                 y += 12;
 
-                // Table Rows
-                const rows = [
-                    ['Codigo', bombasCompare.map(b => b.codigo)],
-                    ['Potencia', bombasCompare.map(b => b.potencia + ' CV')],
-                    ['Tensao', bombasCompare.map(b => b.tensao + 'V')],
-                    ['Fase', bombasCompare.map(b => b.fase === 'monofasico' ? 'Monofasico' : 'Trifasico')],
-                    ['Polos', bombasCompare.map(b => b.polos)],
-                    ['Eficiencia', bombasCompare.map(b => (b.eficiencia || 70) + '%')],
-                    ['Grau Protecao', bombasCompare.map(b => b.grauProtecao)],
-                    ['Succao', bombasCompare.map(b => b.succao + ' mm')],
-                    ['Recalque', bombasCompare.map(b => b.recalque + ' mm')],
-                    ['Pressao Max', bombasCompare.map(b => b.pressaoMax + ' mca')],
-                    ['Material', bombasCompare.map(b => b.material)],
-                    ['Tipo Rotor', bombasCompare.map(b => b.tipoRotor)],
-                    ['Peso', bombasCompare.map(b => (b.peso || '-') + ' kg')],
-                    ['Estoque', bombasCompare.map(b => b.estoque === 'disponivel' ? 'Em Estoque' : b.estoque === 'baixo' ? 'Baixo' : 'Esgotado')]
-                ];
-
-                doc.setFont(undefined, 'normal');
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(8);
-
-                rows.forEach((row, i) => {
-                    if (i % 2 === 0) {
-                        doc.setFillColor(245, 245, 245);
-                        doc.rect(15, y - 2, 267, 7, 'F');
+                // Fotos das bombas lado a lado - com proporção correta
+                const fotoWidth = Math.min(bombaColWidth - 15, 35);
+                const fotoHeight = fotoWidth * 0.8; // Proporção 5:4 para não espremer
+                const cardHeight = fotoHeight + 28;
+                
+                bombasCompare.forEach((b, i) => {
+                    const cardX = margin + (bombaColWidth * i) + 2;
+                    const fotoX = margin + (bombaColWidth * i) + (bombaColWidth - fotoWidth) / 2;
+                    
+                    // Fundo do card
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(cardX, y - 2, bombaColWidth - 4, cardHeight, 3, 3, 'F');
+                    
+                    // Foto com proporção correta (não espremida)
+                    if (b.foto && b.foto.length > 0) {
+                        try {
+                            doc.addImage(b.foto, 'PNG', fotoX, y + 2, fotoWidth, fotoHeight);
+                        } catch (e) {
+                            doc.setFillColor(230, 230, 230);
+                            doc.roundedRect(fotoX, y + 2, fotoWidth, fotoHeight, 2, 2, 'F');
+                            doc.setTextColor(150, 150, 150);
+                            doc.setFontSize(8);
+                            doc.text('Sem foto', fotoX + fotoWidth/2, y + 2 + fotoHeight/2, { align: 'center' });
+                        }
+                    } else {
+                        doc.setFillColor(230, 230, 230);
+                        doc.roundedRect(fotoX, y + 2, fotoWidth, fotoHeight, 2, 2, 'F');
+                        doc.setTextColor(150, 150, 150);
+                        doc.setFontSize(8);
+                        doc.text('Sem foto', fotoX + fotoWidth/2, y + 2 + fotoHeight/2, { align: 'center' });
                     }
                     
-                    doc.setFont(undefined, 'bold');
-                    doc.text(row[0], 18, y + 3);
-                    doc.setFont(undefined, 'normal');
+                    // Nome da bomba abaixo da foto
+                    const nomeX = margin + (bombaColWidth * i) + bombaColWidth/2;
+                    const nomeY = y + fotoHeight + 7;
                     
-                    row[1].forEach((value, j) => {
-                        const x = 15 + colWidth * (j + 1);
-                        doc.text(String(value), x + 3, y + 3);
+                    doc.setTextColor(30, 58, 95);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(b.marca, nomeX, nomeY, { align: 'center' });
+                    
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(8);
+                    doc.text(b.modelo, nomeX, nomeY + 5, { align: 'center' });
+                    
+                    doc.setTextColor(100, 100, 100);
+                    doc.setFontSize(7);
+                    doc.text('Cod: ' + b.codigo, nomeX, nomeY + 10, { align: 'center' });
+                });
+
+                y += cardHeight + 5;
+
+                // ===================== SEÇÃO: ESPECIFICAÇÕES TÉCNICAS =====================
+                doc.setFillColor(30, 58, 95);
+                doc.rect(margin, y, contentWidth, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('ESPECIFICACOES TECNICAS', margin + 3, y + 5.5);
+                y += 12;
+
+                // Tabela de especificações
+                const specs = [
+                    { label: 'Potencia', values: bombasCompare.map(b => b.potencia + ' CV (' + (b.potencia * 0.7355).toFixed(2) + ' kW)') },
+                    { label: 'Tensao', values: bombasCompare.map(b => b.tensao + 'V') },
+                    { label: 'Fase', values: bombasCompare.map(b => b.fase === 'monofasico' ? 'Monofasico' : 'Trifasico') },
+                    { label: 'Polos', values: bombasCompare.map(b => b.polos + ' polos') },
+                    { label: 'Frequencia', values: bombasCompare.map(b => b.frequencia + ' Hz') },
+                    { label: 'Eficiencia', values: bombasCompare.map(b => (b.eficiencia || 70) + '%') },
+                    { label: 'Grau Protecao', values: bombasCompare.map(b => b.grauProtecao || '-') },
+                    { label: 'Succao', values: bombasCompare.map(b => (b.succao || '-') + ' mm') },
+                    { label: 'Recalque', values: bombasCompare.map(b => (b.recalque || '-') + ' mm') },
+                    { label: 'Pressao Max', values: bombasCompare.map(b => (b.pressaoMax || '-') + ' mca') },
+                    { label: 'Material', values: bombasCompare.map(b => b.material || '-') },
+                    { label: 'Tipo Rotor', values: bombasCompare.map(b => b.tipoRotor || '-') },
+                    { label: 'Peso', values: bombasCompare.map(b => (b.peso || '-') + ' kg') },
+                    { label: 'Estoque', values: bombasCompare.map(b => b.estoque === 'disponivel' ? 'Em Estoque' : b.estoque === 'baixo' ? 'Baixo' : 'Esgotado') }
+                ];
+
+                doc.setFontSize(7);
+                specs.forEach((spec, i) => {
+                    // Alternar cor de fundo
+                    if (i % 2 === 0) {
+                        doc.setFillColor(248, 250, 252);
+                        doc.rect(margin, y - 2, contentWidth, 6, 'F');
+                    }
+                    
+                    // Label
+                    doc.setTextColor(30, 58, 95);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(spec.label + ':', margin + 2, y + 2);
+                    
+                    // Valores
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(0, 0, 0);
+                    spec.values.forEach((val, j) => {
+                        const x = margin + 35 + (bombaColWidth - 35/numBombas) * j;
+                        doc.text(String(val), x, y + 2);
                     });
                     
-                    y += 7;
+                    y += 6;
                 });
+
+                // ===================== PÁGINA 2: CURVAS DE DESEMPENHO =====================
+                doc.addPage();
+                
+                // Header página 2
+                doc.setFillColor(30, 58, 95);
+                doc.rect(0, 0, pageWidth, 25, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(18);
+                doc.text('Dimensionador Conab', margin, 14);
+                doc.setTextColor(34, 197, 94);
+                doc.text('+', 78, 14);
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(9);
+                doc.text('Comparacao de Bombas - Curvas de Desempenho', margin, 21);
+                doc.text('Pagina 2', pageWidth - margin - 20, 21);
+
+                y = 35;
+
+                // Título da seção
+                doc.setFillColor(30, 58, 95);
+                doc.rect(margin, y, contentWidth, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('CURVAS DE DESEMPENHO', margin + 3, y + 5.5);
+                y += 15;
+
+                // Curvas de cada bomba - com tamanho proporcional e ajustado ao quadro
+                const chartHeight = 65;
+                const chartMargin = 8;
+                const chartWidth = bombaColWidth - (chartMargin * 2);
+                const cardChartHeight = chartHeight + 35;
+
+                for (let i = 0; i < bombasCompare.length; i++) {
+                    const b = bombasCompare[i];
+                    const cardX = margin + (bombaColWidth * i) + 2;
+                    const chartX = margin + (bombaColWidth * i) + chartMargin;
+                    
+                    // Card da bomba com borda
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(cardX, y - 3, bombaColWidth - 4, cardChartHeight, 3, 3, 'F');
+                    doc.setDrawColor(200, 200, 200);
+                    doc.roundedRect(cardX, y - 3, bombaColWidth - 4, cardChartHeight, 3, 3, 'S');
+                    
+                    // Nome da bomba
+                    doc.setTextColor(30, 58, 95);
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(b.marca + ' ' + b.modelo, cardX + (bombaColWidth - 4)/2, y + 5, { align: 'center' });
+                    
+                    // Área do gráfico com fundo branco
+                    doc.setFillColor(255, 255, 255);
+                    doc.roundedRect(chartX, y + 10, chartWidth, chartHeight, 2, 2, 'F');
+                    
+                    // Capturar gráfico
+                    const canvas = document.getElementById(`compareChart-${i}`);
+                    if (canvas) {
+                        try {
+                            const imgData = canvas.toDataURL('image/png', 1);
+                            // Adiciona a imagem dentro da área branca
+                            doc.addImage(imgData, 'PNG', chartX + 2, y + 12, chartWidth - 4, chartHeight - 4);
+                        } catch (e) {
+                            doc.setFillColor(230, 230, 230);
+                            doc.rect(chartX + 2, y + 12, chartWidth - 4, chartHeight - 4, 'F');
+                            doc.setTextColor(150, 150, 150);
+                            doc.setFontSize(7);
+                            doc.text('Grafico nao disponivel', cardX + (bombaColWidth - 4)/2, y + 10 + chartHeight/2, { align: 'center' });
+                        }
+                    }
+                    
+                    // Info do ponto de trabalho
+                    if (pontoTrabalho.vazao > 0 && pontoTrabalho.altura > 0) {
+                        doc.setTextColor(220, 38, 38);
+                        doc.setFontSize(6);
+                        doc.setFont(undefined, 'bold');
+                        doc.text('PT: ' + pontoTrabalho.vazao + ' m3/h @ ' + pontoTrabalho.altura + ' mca', cardX + (bombaColWidth - 4)/2, y + chartHeight + 18, { align: 'center' });
+                    }
+                }
 
                 // Footer
                 doc.setFontSize(7);
                 doc.setTextColor(128, 128, 128);
-                doc.text('Documento gerado pelo Dimensionador Conab+ | www.conab.com.br', 148.5, 200, { align: 'center' });
+                doc.text('Documento gerado pelo Dimensionador Conab+ | www.conab.com.br', pageWidth/2, pageHeight - 10, { align: 'center' });
+
+                // Adicionar número de páginas
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(7);
+                    doc.setTextColor(128, 128, 128);
+                    doc.text('Pagina ' + i + ' de ' + totalPages, pageWidth - margin, pageHeight - 10);
+                }
 
                 doc.save('comparacao_bombas_' + Date.now() + '.pdf');
                 
