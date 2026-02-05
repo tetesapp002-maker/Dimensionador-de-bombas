@@ -2842,39 +2842,89 @@
                 y += 15;
 
                 // Curvas de cada bomba - com tamanho proporcional e ajustado ao quadro
-                const chartHeight = 65;
-                const chartMargin = 8;
-                const chartWidth = bombaColWidth - (chartMargin * 2);
-                const cardChartHeight = chartHeight + 35;
+                const chartMargin = 6;
+                const chartWidth = bombaColWidth - (chartMargin * 2) - 4;
+                // Proporção 4:3 para o gráfico não ficar distorcido
+                const chartHeight = chartWidth * 0.75;
+                const cardChartHeight = chartHeight + 40;
 
                 for (let i = 0; i < bombasCompare.length; i++) {
                     const b = bombasCompare[i];
                     const cardX = margin + (bombaColWidth * i) + 2;
-                    const chartX = margin + (bombaColWidth * i) + chartMargin;
+                    const chartX = margin + (bombaColWidth * i) + chartMargin + 2;
+                    const cardWidth = bombaColWidth - 4;
                     
                     // Card da bomba com borda
                     doc.setFillColor(248, 250, 252);
-                    doc.roundedRect(cardX, y - 3, bombaColWidth - 4, cardChartHeight, 3, 3, 'F');
+                    doc.roundedRect(cardX, y - 3, cardWidth, cardChartHeight, 3, 3, 'F');
                     doc.setDrawColor(200, 200, 200);
-                    doc.roundedRect(cardX, y - 3, bombaColWidth - 4, cardChartHeight, 3, 3, 'S');
+                    doc.roundedRect(cardX, y - 3, cardWidth, cardChartHeight, 3, 3, 'S');
                     
-                    // Nome da bomba
+                    // Nome da bomba - ajustado para caber no quadro
+                    const nomeCompleto = b.marca + ' ' + b.modelo;
+                    const maxLarguraTexto = cardWidth - 6; // margem de 3px de cada lado
+                    
                     doc.setTextColor(30, 58, 95);
-                    doc.setFontSize(8);
                     doc.setFont(undefined, 'bold');
-                    doc.text(b.marca + ' ' + b.modelo, cardX + (bombaColWidth - 4)/2, y + 5, { align: 'center' });
                     
-                    // Área do gráfico com fundo branco
+                    // Ajustar tamanho da fonte para caber no quadro
+                    let fontSize = 9;
+                    doc.setFontSize(fontSize);
+                    while (doc.getTextWidth(nomeCompleto) > maxLarguraTexto && fontSize > 6) {
+                        fontSize -= 0.5;
+                        doc.setFontSize(fontSize);
+                    }
+                    
+                    // Se ainda não couber, quebra em duas linhas
+                    if (doc.getTextWidth(nomeCompleto) > maxLarguraTexto) {
+                        doc.setFontSize(7);
+                        doc.text(b.marca, cardX + cardWidth/2, y + 4, { align: 'center' });
+                        doc.setFont(undefined, 'normal');
+                        doc.setFontSize(6);
+                        // Truncar modelo se necessário
+                        let modeloTruncado = b.modelo;
+                        while (doc.getTextWidth(modeloTruncado) > maxLarguraTexto && modeloTruncado.length > 5) {
+                            modeloTruncado = modeloTruncado.slice(0, -1);
+                        }
+                        if (modeloTruncado !== b.modelo) modeloTruncado += '...';
+                        doc.text(modeloTruncado, cardX + cardWidth/2, y + 9, { align: 'center' });
+                    } else {
+                        doc.text(nomeCompleto, cardX + cardWidth/2, y + 6, { align: 'center' });
+                    }
+                    
+                    // Área do gráfico com fundo branco e borda
                     doc.setFillColor(255, 255, 255);
-                    doc.roundedRect(chartX, y + 10, chartWidth, chartHeight, 2, 2, 'F');
+                    doc.setDrawColor(230, 230, 230);
+                    doc.roundedRect(chartX, y + 10, chartWidth, chartHeight, 2, 2, 'FD');
                     
-                    // Capturar gráfico
+                    // Capturar gráfico com proporções corretas
                     const canvas = document.getElementById(`compareChart-${i}`);
                     if (canvas) {
                         try {
                             const imgData = canvas.toDataURL('image/png', 1);
-                            // Adiciona a imagem dentro da área branca
-                            doc.addImage(imgData, 'PNG', chartX + 2, y + 12, chartWidth - 4, chartHeight - 4);
+                            
+                            // Calcular proporções para manter aspecto do gráfico
+                            const canvasRatio = canvas.width / canvas.height;
+                            const boxRatio = (chartWidth - 4) / (chartHeight - 4);
+                            
+                            let imgWidth, imgHeight, imgX, imgY;
+                            
+                            if (canvasRatio > boxRatio) {
+                                // Gráfico mais largo - ajustar pela largura
+                                imgWidth = chartWidth - 4;
+                                imgHeight = imgWidth / canvasRatio;
+                                imgX = chartX + 2;
+                                imgY = y + 12 + ((chartHeight - 4) - imgHeight) / 2;
+                            } else {
+                                // Gráfico mais alto - ajustar pela altura
+                                imgHeight = chartHeight - 4;
+                                imgWidth = imgHeight * canvasRatio;
+                                imgX = chartX + 2 + ((chartWidth - 4) - imgWidth) / 2;
+                                imgY = y + 12;
+                            }
+                            
+                            // Adiciona a imagem centralizada dentro da área branca
+                            doc.addImage(imgData, 'PNG', imgX, imgY, imgWidth, imgHeight);
                         } catch (e) {
                             doc.setFillColor(230, 230, 230);
                             doc.rect(chartX + 2, y + 12, chartWidth - 4, chartHeight - 4, 'F');
@@ -2889,7 +2939,7 @@
                         doc.setTextColor(220, 38, 38);
                         doc.setFontSize(6);
                         doc.setFont(undefined, 'bold');
-                        doc.text('PT: ' + pontoTrabalho.vazao + ' m3/h @ ' + pontoTrabalho.altura + ' mca', cardX + (bombaColWidth - 4)/2, y + chartHeight + 18, { align: 'center' });
+                        doc.text('PT: ' + pontoTrabalho.vazao + ' m3/h @ ' + pontoTrabalho.altura + ' mca', cardX + (bombaColWidth - 4)/2, y + chartHeight + 20, { align: 'center' });
                     }
                 }
 
