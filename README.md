@@ -2405,8 +2405,18 @@
             e.preventDefault();
             
             const codigo = document.getElementById('cadCodigo').value.trim();
-            if (bombas.find(b => b.codigo === codigo)) {
+            const marca = document.getElementById('cadMarca').value.trim();
+            const modelo = document.getElementById('cadModelo').value.trim();
+            
+            // Validação: Código único
+            if (bombas.find(b => b.codigo.toLowerCase() === codigo.toLowerCase())) {
                 alert('Código já existe! Use um código único.');
+                return;
+            }
+            
+            // Validação: Marca + Modelo não podem ser idênticos a outro cadastro
+            if (bombas.find(b => b.marca.toLowerCase() === marca.toLowerCase() && b.modelo.toLowerCase() === modelo.toLowerCase())) {
+                alert('Já existe uma bomba cadastrada com a mesma Marca e Modelo!\n\nMarca: ' + marca + '\nModelo: ' + modelo);
                 return;
             }
 
