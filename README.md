@@ -3156,53 +3156,89 @@
         // ==================== LISTA ====================
         function renderLista() {
             const tbody = document.getElementById('listaBombasTable');
-            if (!tbody) return;
+            if (!tbody) {
+                console.error('Elemento listaBombasTable não encontrado');
+                return;
+            }
             
-            // Verificar permissões do usuário logado
-            // Admin sempre pode tudo
-            const isAdmin = currentUser && currentUser.isAdmin;
-            const canEdit = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.alterarBombas);
-            const canDelete = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.excluirBombas);
-            
-            // Log para debug
+            console.log('renderLista - iniciando');
+            console.log('renderLista - bombas:', Array.isArray(bombas) ? bombas.length : 'não é array');
             console.log('renderLista - currentUser:', currentUser);
-            console.log('renderLista - isAdmin:', isAdmin);
-            console.log('renderLista - canEdit:', canEdit);
-            console.log('renderLista - canDelete:', canDelete);
-            console.log('renderLista - bombas:', bombas.length);
             
-            if (!bombas || bombas.length === 0) {
+            // Verificar se bombas existe e é um array
+            if (!Array.isArray(bombas)) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-red-500">Erro: dados de bombas inválidos</td></tr>';
+                return;
+            }
+            
+            // Verificar se há bombas
+            if (bombas.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Nenhuma bomba cadastrada</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = bombas.map(bomba => {
-                const estoqueColor = bomba.estoque === 'disponivel' ? 'bg-green-100 text-green-800' :
-                                    bomba.estoque === 'baixo' ? 'bg-yellow-100 text-yellow-800' : 
-                                    'bg-red-100 text-red-800';
-                const estoqueText = bomba.estoque === 'disponivel' ? 'Disponível' : bomba.estoque === 'baixo' ? 'Baixo' : 'Esgotado';
+            // Verificar permissões
+            const isAdmin = currentUser && currentUser.isAdmin === true;
+            const canEdit = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.alterarBombas === true);
+            const canDelete = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.excluirBombas === true);
+            
+            console.log('renderLista - isAdmin:', isAdmin);
+            console.log('renderLista - canEdit:', canEdit);
+            console.log('renderLista - canDelete:', canDelete);
+            
+            try {
+                // Renderizar bombas
+                const linhas = bombas.map((bomba, index) => {
+                    // Proteção contra dados inválidos
+                    const codigo = bomba.codigo || '';
+                    const marca = bomba.marca || '';
+                    const modelo = bomba.modelo || '';
+                    const potencia = bomba.potencia || 0;
+                    const fase = bomba.fase || 'trifasico';
+                    const tensao = bomba.tensao || '';
+                    const estoque = bomba.estoque || 'disponivel';
+                    
+                    // Determinar cor e texto do estoque
+                    let estoqueColor = 'bg-green-100 text-green-800';
+                    let estoqueText = 'Disponível';
+                    
+                    if (estoque === 'baixo') {
+                        estoqueColor = 'bg-yellow-100 text-yellow-800';
+                        estoqueText = 'Baixo';
+                    } else if (estoque === 'esgotado') {
+                        estoqueColor = 'bg-red-100 text-red-800';
+                        estoqueText = 'Esgotado';
+                    }
+                    
+                    // Determinar quais botões mostrar
+                    const showEditBtn = isAdmin || canEdit;
+                    const showDeleteBtn = isAdmin || canDelete;
+                    
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-3">${codigo}</td>
+                            <td class="px-4 py-3">${marca}</td>
+                            <td class="px-4 py-3">${modelo}</td>
+                            <td class="px-4 py-3 text-center">${potencia} CV</td>
+                            <td class="px-4 py-3 text-center">${fase === 'monofasico' ? 'Mono' : 'Tri'}</td>
+                            <td class="px-4 py-3 text-center">${tensao}V</td>
+                            <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs ${estoqueColor}">${estoqueText}</span></td>
+                            <td class="px-4 py-3 text-center">
+                                ${showEditBtn ? `<button onclick="editarBomba('${bomba.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Editar">✏️</button>` : ''}
+                                ${showDeleteBtn ? `<button onclick="excluirBomba('${bomba.id}')" class="text-red-600 hover:text-red-800" title="Excluir">🗑️</button>` : ''}
+                                ${!showEditBtn && !showDeleteBtn ? '<span class="text-gray-400 text-xs">Sem permissão</span>' : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
                 
-                // Se for admin, sempre mostra os botões
-                const showEditBtn = isAdmin || canEdit;
-                const showDeleteBtn = isAdmin || canDelete;
+                tbody.innerHTML = linhas.join('');
+                console.log('renderLista - concluído com sucesso');
                 
-                return `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3">${bomba.codigo}</td>
-                        <td class="px-4 py-3">${bomba.marca}</td>
-                        <td class="px-4 py-3">${bomba.modelo}</td>
-                        <td class="px-4 py-3 text-center">${bomba.potencia} CV</td>
-                        <td class="px-4 py-3 text-center">${bomba.fase === 'monofasico' ? 'Mono' : 'Tri'}</td>
-                        <td class="px-4 py-3 text-center">${bomba.tensao}V</td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs ${estoqueColor}">${estoqueText}</span></td>
-                        <td class="px-4 py-3 text-center">
-                            ${showEditBtn ? `<button onclick="editarBomba('${bomba.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Editar">✏️</button>` : ''}
-                            ${showDeleteBtn ? `<button onclick="excluirBomba('${bomba.id}')" class="text-red-600 hover:text-red-800" title="Excluir">🗑️</button>` : ''}
-                            ${!showEditBtn && !showDeleteBtn ? '<span class="text-gray-400 text-xs">Sem permissão</span>' : ''}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            } catch (error) {
+                console.error('Erro ao renderizar lista:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-red-500">Erro ao carregar lista de bombas</td></tr>';
+            }
         }
 
         function filtrarLista() {
@@ -3966,7 +4002,7 @@
             if (!listasSuspensas[lista].includes(valor)) {
                 listasSuspensas[lista].push(valor);
                 saveConfigData();
-                renderLista(lista);
+                renderListaSuspensa(lista);
             }
             
             input.value = '';
@@ -3975,10 +4011,10 @@
         function removerItemLista(lista, valor) {
             listasSuspensas[lista] = listasSuspensas[lista].filter(v => v !== valor);
             saveConfigData();
-            renderLista(lista);
+            renderListaSuspensa(lista);
         }
 
-        function renderLista(lista) {
+        function renderListaSuspensa(lista) {
             const containerId = 'lista' + lista.charAt(0).toUpperCase() + lista.slice(1);
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -3992,7 +4028,7 @@
         }
 
         function renderTodasListas() {
-            Object.keys(listasSuspensas).forEach(lista => renderLista(lista));
+            Object.keys(listasSuspensas).forEach(lista => renderListaSuspensa(lista));
         }
 
         // Gerenciar Clientes
