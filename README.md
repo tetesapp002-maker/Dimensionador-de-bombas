@@ -46,6 +46,35 @@
     </style>
 </head>
 <body class="light bg-gray-100 min-h-screen">
+    <!-- Tela de Login Inicial (obrigatório) -->
+    <div id="loginScreen" class="fixed inset-0 bg-gradient-to-br from-[#1e3a5f] to-[#152a45] z-[100] flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-[#1e3a5f]">
+                    Dimensionador Conab<span class="text-green-500 text-4xl">+</span>
+                </h1>
+                <p class="text-gray-500 mt-2">Faça login para acessar o sistema</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuário</label>
+                    <input type="text" id="loginUser" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Digite seu usuário">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                    <input type="password" id="loginPass" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Digite sua senha" onkeypress="if(event.key==='Enter')fazerLogin()">
+                </div>
+                <button onclick="fazerLogin()" class="w-full btn-primary text-white font-semibold py-3 px-8 rounded-lg transition">
+                    Entrar
+                </button>
+                <p id="loginErrorMsg" class="text-red-500 text-center text-sm hidden">Usuário ou senha incorretos</p>
+            </div>
+            <div class="mt-6 pt-6 border-t text-center text-xs text-gray-400">
+                Contate o administrador para obter acesso
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="bg-gradient-to-r from-[#1e3a5f] to-[#152a45] text-white shadow-xl sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
@@ -78,6 +107,30 @@
                     <div id="compareBadge" class="hidden compare-badge bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold cursor-pointer" onclick="openCompareModal()">
                         Comparar: <span id="compareCount">0</span>/5
                     </div>
+                    <!-- Menu do Usuário -->
+                    <div id="userMenu" class="hidden relative">
+                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span id="userNameDisplay" class="text-sm font-medium">Usuário</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50">
+                            <div class="px-4 py-2 border-b">
+                                <p class="text-sm font-semibold text-gray-700" id="dropdownUserName">Usuário</p>
+                                <p class="text-xs text-gray-500" id="dropdownUserRole">Função</p>
+                            </div>
+                            <button onclick="fazerLogout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                Sair
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- Tabs -->
@@ -97,6 +150,9 @@
                 </button>
                 <button onclick="showTab('relatorios')" class="tab-btn px-4 py-2 rounded-t-lg font-medium whitespace-nowrap transition hover:bg-white/10" data-tab="relatorios">
                     Relatórios
+                </button>
+                <button onclick="showTab('configuracoes')" class="tab-btn px-4 py-2 rounded-t-lg font-medium whitespace-nowrap transition hover:bg-white/10" data-tab="configuracoes">
+                    Configurações
                 </button>
             </nav>
         </div>
@@ -675,6 +731,256 @@
                 <div id="relatorioContent"></div>
             </div>
         </section>
+
+        <!-- Tab: Configurações -->
+        <section id="tab-configuracoes" class="tab-content hidden">
+            <!-- Login Admin -->
+            <div id="adminLogin" class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-bold text-[#1e3a5f] mb-6">Acesso Administrativo</h2>
+                <div class="max-w-md mx-auto">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Usuário</label>
+                        <input type="text" id="adminUser" class="filter-input w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Digite o usuário">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                        <input type="password" id="adminPass" class="filter-input w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Digite a senha">
+                    </div>
+                    <button onclick="loginAdmin()" class="btn-primary w-full text-white font-semibold py-3 px-8 rounded-lg transition">
+                        Entrar
+                    </button>
+                    <p id="loginError" class="text-red-500 text-center mt-3 hidden">Usuário ou senha incorretos</p>
+                </div>
+            </div>
+
+            <!-- Painel Admin (oculto até login) -->
+            <div id="adminPanel" class="hidden">
+                <!-- Controle de Usuários -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-[#1e3a5f]">Controle de Usuários</h2>
+                        <button onclick="logoutAdmin()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                            Sair
+                        </button>
+                    </div>
+                    
+                    <!-- Adicionar Usuário -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-gray-700 mb-3">Adicionar Novo Usuário</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Nome do Usuário</label>
+                                <input type="text" id="novoUserNome" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nome">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Login</label>
+                                <input type="text" id="novoUserLogin" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Login">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Senha</label>
+                                <input type="password" id="novoUserSenha" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Senha">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="adicionarUsuario()" class="btn-primary w-full text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                    Adicionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Usuários -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-[#1e3a5f] text-white">
+                                    <th class="px-4 py-3 text-left rounded-tl-lg">Nome</th>
+                                    <th class="px-4 py-3 text-left">Login</th>
+                                    <th class="px-4 py-3 text-center">Alterar Bombas</th>
+                                    <th class="px-4 py-3 text-center">Excluir Bombas</th>
+                                    <th class="px-4 py-3 text-center">Excluir Orçamentos</th>
+                                    <th class="px-4 py-3 text-center">Gerenciar Clientes</th>
+                                    <th class="px-4 py-3 text-center rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaUsuarios">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Gerenciamento de Listas Suspensas -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h2 class="text-xl font-bold text-[#1e3a5f] mb-6">Gerenciamento de Listas Suspensas</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Categorias -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Categorias</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaCategoria" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nova categoria">
+                                <button onclick="adicionarItemLista('categorias', 'novaCategoria')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaCategorias" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Polos -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Polos</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novoPolos" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo valor">
+                                <button onclick="adicionarItemLista('polos', 'novoPolos')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaPolos" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Fase -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Fase</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaFase" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nova fase">
+                                <button onclick="adicionarItemLista('fases', 'novaFase')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaFases" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Grau de Proteção -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Grau de Proteção</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novoGrauProtecao" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo grau">
+                                <button onclick="adicionarItemLista('grausProtecao', 'novoGrauProtecao')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaGrausProtecao" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Frequência -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Frequência</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaFrequencia" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nova frequência">
+                                <button onclick="adicionarItemLista('frequencias', 'novaFrequencia')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaFrequencias" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Tipo de Rotor -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Tipo de Rotor</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novoTipoRotor" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo tipo">
+                                <button onclick="adicionarItemLista('tiposRotor', 'novoTipoRotor')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaTiposRotor" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Posição -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Posição</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaPosicao" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nova posição">
+                                <button onclick="adicionarItemLista('posicoes', 'novaPosicao')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaPosicoes" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Tipo de Embalagem -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Tipo de Embalagem</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaEmbalagem" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo tipo">
+                                <button onclick="adicionarItemLista('embalagens', 'novaEmbalagem')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaEmbalagens" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Tipo de Conexão -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Tipo de Conexão</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaConexao" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo tipo">
+                                <button onclick="adicionarItemLista('conexoes', 'novaConexao')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaConexoes" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Inversor -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Inversor</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novoInversor" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo valor">
+                                <button onclick="adicionarItemLista('inversores', 'novoInversor')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaInversores" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Estoque -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Status de Estoque</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novoEstoque" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Novo status">
+                                <button onclick="adicionarItemLista('estoques', 'novoEstoque')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaEstoques" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+
+                        <!-- Tensões Comuns -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Tensões Comuns</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="novaTensao" class="filter-input flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nova tensão">
+                                <button onclick="adicionarItemLista('tensoes', 'novaTensao')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">+</button>
+                            </div>
+                            <ul id="listaTensoes" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gerenciamento de Clientes -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-[#1e3a5f] mb-6">Gerenciamento de Clientes</h2>
+                    
+                    <!-- Adicionar Cliente -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-gray-700 mb-3">Adicionar Novo Cliente</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Nome do Cliente</label>
+                                <input type="text" id="novoClienteNome" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nome">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">CNPJ/CPF</label>
+                                <input type="text" id="novoClienteDoc" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Documento">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Telefone</label>
+                                <input type="text" id="novoClienteTel" class="filter-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Telefone">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="adicionarCliente()" class="btn-primary w-full text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                    Adicionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Clientes -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-[#1e3a5f] text-white">
+                                    <th class="px-4 py-3 text-left rounded-tl-lg">Nome</th>
+                                    <th class="px-4 py-3 text-left">CNPJ/CPF</th>
+                                    <th class="px-4 py-3 text-left">Telefone</th>
+                                    <th class="px-4 py-3 text-center rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaClientes">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Modal: Ficha Técnica -->
@@ -768,6 +1074,69 @@
         let curvasChart = null;
         let isDarkMode = false;
         let pontoTrabalho = { vazao: 0, altura: 0 };
+
+        // ==================== SISTEMA DE LOGIN ====================
+        function fazerLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            
+            if (!user || !pass) {
+                document.getElementById('loginErrorMsg').classList.remove('hidden');
+                return;
+            }
+            
+            // Verificar admin
+            if (user === 'admin' && pass === 'admin123') {
+                currentUser = { nome: 'Administrador', login: 'admin', isAdmin: true };
+                completarLogin();
+                return;
+            }
+            
+            // Verificar usuários cadastrados
+            const usuario = usuarios.find(u => u.login === user && u.senha === pass);
+            if (usuario) {
+                currentUser = usuario;
+                completarLogin();
+                return;
+            }
+            
+            document.getElementById('loginErrorMsg').classList.remove('hidden');
+        }
+        
+        function completarLogin() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('loginErrorMsg').classList.add('hidden');
+            document.getElementById('userMenu').classList.remove('hidden');
+            document.getElementById('userNameDisplay').textContent = currentUser.nome;
+            document.getElementById('dropdownUserName').textContent = currentUser.nome;
+            document.getElementById('dropdownUserRole').textContent = currentUser.isAdmin ? 'Administrador' : 'Usuário';
+            
+            atualizarVisibilidadeAbas();
+            renderLista();
+        }
+        
+        function fazerLogout() {
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('userMenu').classList.add('hidden');
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('userDropdown').classList.add('hidden');
+            showTab('dimensionamento');
+        }
+        
+        function toggleUserDropdown() {
+            document.getElementById('userDropdown').classList.toggle('hidden');
+        }
+        
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            const userMenu = document.getElementById('userMenu');
+            const dropdown = document.getElementById('userDropdown');
+            if (userMenu && dropdown && !userMenu.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
 
         // ==================== SAMPLE DATA ====================
         const bombasExemplo = [
@@ -892,6 +1261,9 @@
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            // Carregar dados de configuração primeiro
+            await loadConfigData();
+            
             await loadFromStorage();
             if (bombas.length === 0) {
                 bombas = [...bombasExemplo];
@@ -908,6 +1280,9 @@
             
             // Configurar listeners do Firebase para sincronização em tempo real
             setupFirebaseListeners();
+            
+            // Atualizar visibilidade das abas baseado no usuário
+            atualizarVisibilidadeAbas();
         });
 
         // ==================== STORAGE ====================
@@ -1038,6 +1413,15 @@
             
             if (tabName === 'lista') renderLista();
             if (tabName === 'orcamento') updateOrcamentoView();
+            
+            // Se acessar configurações e for admin, mostrar painel automaticamente
+            if (tabName === 'configuracoes' && currentUser && currentUser.isAdmin) {
+                document.getElementById('adminLogin').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                renderUsuarios();
+                renderClientes();
+                renderTodasListas();
+            }
         }
 
         // ==================== THEME ====================
@@ -2772,10 +3156,36 @@
         // ==================== LISTA ====================
         function renderLista() {
             const tbody = document.getElementById('listaBombasTable');
+            if (!tbody) return;
+            
+            // Verificar permissões do usuário logado
+            // Admin sempre pode tudo
+            const isAdmin = currentUser && currentUser.isAdmin;
+            const canEdit = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.alterarBombas);
+            const canDelete = isAdmin || (currentUser && currentUser.permissoes && currentUser.permissoes.excluirBombas);
+            
+            // Log para debug
+            console.log('renderLista - currentUser:', currentUser);
+            console.log('renderLista - isAdmin:', isAdmin);
+            console.log('renderLista - canEdit:', canEdit);
+            console.log('renderLista - canDelete:', canDelete);
+            console.log('renderLista - bombas:', bombas.length);
+            
+            if (!bombas || bombas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Nenhuma bomba cadastrada</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = bombas.map(bomba => {
                 const estoqueColor = bomba.estoque === 'disponivel' ? 'bg-green-100 text-green-800' :
                                     bomba.estoque === 'baixo' ? 'bg-yellow-100 text-yellow-800' : 
                                     'bg-red-100 text-red-800';
+                const estoqueText = bomba.estoque === 'disponivel' ? 'Disponível' : bomba.estoque === 'baixo' ? 'Baixo' : 'Esgotado';
+                
+                // Se for admin, sempre mostra os botões
+                const showEditBtn = isAdmin || canEdit;
+                const showDeleteBtn = isAdmin || canDelete;
+                
                 return `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3">${bomba.codigo}</td>
@@ -2784,10 +3194,11 @@
                         <td class="px-4 py-3 text-center">${bomba.potencia} CV</td>
                         <td class="px-4 py-3 text-center">${bomba.fase === 'monofasico' ? 'Mono' : 'Tri'}</td>
                         <td class="px-4 py-3 text-center">${bomba.tensao}V</td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs ${estoqueColor}">${bomba.estoque === 'disponivel' ? 'Disponível' : bomba.estoque === 'baixo' ? 'Baixo' : 'Esgotado'}</span></td>
+                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs ${estoqueColor}">${estoqueText}</span></td>
                         <td class="px-4 py-3 text-center">
-                            <button onclick="editarBomba('${bomba.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Editar">✏️</button>
-                            <button onclick="excluirBomba('${bomba.id}')" class="text-red-600 hover:text-red-800" title="Excluir">🗑️</button>
+                            ${showEditBtn ? `<button onclick="editarBomba('${bomba.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Editar">✏️</button>` : ''}
+                            ${showDeleteBtn ? `<button onclick="excluirBomba('${bomba.id}')" class="text-red-600 hover:text-red-800" title="Excluir">🗑️</button>` : ''}
+                            ${!showEditBtn && !showDeleteBtn ? '<span class="text-gray-400 text-xs">Sem permissão</span>' : ''}
                         </td>
                     </tr>
                 `;
@@ -3356,6 +3767,328 @@
 
         // Initialize
         bombasFiltradas = [...bombas];
+
+        // ==================== CONFIGURAÇÕES - ADMIN ====================
+        let usuarios = [];
+        let clientes = [];
+        let listasSuspensas = {
+            categorias: ['centrifuga', 'submersa', 'autoaspirante', 'multicelular', 'pressurizacao'],
+            polos: ['2', '4', '6'],
+            fases: ['monofasico', 'trifasico'],
+            grausProtecao: ['IP21', 'IP44', 'IP55', 'IP65', 'IP68'],
+            frequencias: ['50', '60', '50/60'],
+            tiposRotor: ['fechado', 'aberto', 'semiaberto'],
+            posicoes: ['horizontal', 'vertical'],
+            embalagens: ['caixa_papelao', 'pallet', 'caixa_madeira', 'granel'],
+            conexoes: ['rosca', 'flange'],
+            inversores: ['sim', 'nao'],
+            estoques: ['disponivel', 'baixo', 'esgotado'],
+            tensoes: ['127', '220', '380', '440']
+        };
+        let currentUser = null;
+        const ADMIN_USER = 'admin';
+        const ADMIN_PASS = 'admin123';
+
+        // Carregar dados de configuração
+        async function loadConfigData() {
+            if (firebaseInitialized) {
+                try {
+                    const usuariosSnap = await database.ref('usuarios').once('value');
+                    if (usuariosSnap.exists()) usuarios = Object.values(usuariosSnap.val());
+                    
+                    const clientesSnap = await database.ref('clientes').once('value');
+                    if (clientesSnap.exists()) clientes = Object.values(clientesSnap.val());
+                    
+                    const listasSnap = await database.ref('listasSuspensas').once('value');
+                    if (listasSnap.exists()) listasSuspensas = { ...listasSuspensas, ...listasSnap.val() };
+                } catch (e) {
+                    console.log('Erro ao carregar config:', e);
+                }
+            } else {
+                const storedUsuarios = localStorage.getItem('conab_usuarios');
+                if (storedUsuarios) usuarios = JSON.parse(storedUsuarios);
+                const storedClientes = localStorage.getItem('conab_clientes');
+                if (storedClientes) clientes = JSON.parse(storedClientes);
+                const storedListas = localStorage.getItem('conab_listas');
+                if (storedListas) listasSuspensas = { ...listasSuspensas, ...JSON.parse(storedListas) };
+            }
+        }
+
+        async function saveConfigData() {
+            if (firebaseInitialized) {
+                try {
+                    const usuariosObj = {};
+                    usuarios.forEach(u => { usuariosObj[u.id] = u; });
+                    await database.ref('usuarios').set(usuariosObj);
+                    
+                    const clientesObj = {};
+                    clientes.forEach(c => { clientesObj[c.id] = c; });
+                    await database.ref('clientes').set(clientesObj);
+                    
+                    await database.ref('listasSuspensas').set(listasSuspensas);
+                } catch (e) {
+                    console.log('Erro ao salvar config:', e);
+                }
+            } else {
+                localStorage.setItem('conab_usuarios', JSON.stringify(usuarios));
+                localStorage.setItem('conab_clientes', JSON.stringify(clientes));
+                localStorage.setItem('conab_listas', JSON.stringify(listasSuspensas));
+            }
+        }
+
+        // Login Admin (na aba de configurações - apenas para admin)
+        function loginAdmin() {
+            // Se o usuário atual é admin, mostrar o painel
+            if (currentUser && currentUser.isAdmin) {
+                document.getElementById('adminLogin').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                renderUsuarios();
+                renderClientes();
+                renderTodasListas();
+            } else {
+                // Verificar credenciais do admin
+                const user = document.getElementById('adminUser').value;
+                const pass = document.getElementById('adminPass').value;
+                
+                if (user === ADMIN_USER && pass === ADMIN_PASS) {
+                    document.getElementById('adminLogin').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    document.getElementById('loginError').classList.add('hidden');
+                    renderUsuarios();
+                    renderClientes();
+                    renderTodasListas();
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('adminLogin').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('adminUser').value = '';
+            document.getElementById('adminPass').value = '';
+        }
+
+        // Gerenciar Usuários
+        function adicionarUsuario() {
+            const nome = document.getElementById('novoUserNome').value.trim();
+            const login = document.getElementById('novoUserLogin').value.trim();
+            const senha = document.getElementById('novoUserSenha').value.trim();
+            
+            if (!nome || !login || !senha) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            
+            if (usuarios.find(u => u.login === login)) {
+                alert('Login já existe!');
+                return;
+            }
+            
+            usuarios.push({
+                id: Date.now().toString(),
+                nome,
+                login,
+                senha,
+                permissoes: {
+                    alterarBombas: false,
+                    excluirBombas: false,
+                    excluirOrcamentos: false,
+                    gerenciarClientes: false
+                }
+            });
+            
+            saveConfigData();
+            renderUsuarios();
+            
+            document.getElementById('novoUserNome').value = '';
+            document.getElementById('novoUserLogin').value = '';
+            document.getElementById('novoUserSenha').value = '';
+        }
+
+        function renderUsuarios() {
+            const tbody = document.getElementById('listaUsuarios');
+            tbody.innerHTML = usuarios.map(u => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3">${u.nome}</td>
+                    <td class="px-4 py-3">${u.login}</td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="checkbox" ${u.permissoes.alterarBombas ? 'checked' : ''} 
+                               onchange="togglePermissao('${u.id}', 'alterarBombas', this.checked)"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="checkbox" ${u.permissoes.excluirBombas ? 'checked' : ''} 
+                               onchange="togglePermissao('${u.id}', 'excluirBombas', this.checked)"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="checkbox" ${u.permissoes.excluirOrcamentos ? 'checked' : ''} 
+                               onchange="togglePermissao('${u.id}', 'excluirOrcamentos', this.checked)"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="checkbox" ${u.permissoes.gerenciarClientes ? 'checked' : ''} 
+                               onchange="togglePermissao('${u.id}', 'gerenciarClientes', this.checked)"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="excluirUsuario('${u.id}')" class="text-red-600 hover:text-red-800">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function togglePermissao(userId, permissao, valor) {
+            const usuario = usuarios.find(u => u.id === userId);
+            if (usuario) {
+                usuario.permissoes[permissao] = valor;
+                saveConfigData();
+            }
+        }
+
+        function excluirUsuario(userId) {
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                usuarios = usuarios.filter(u => u.id !== userId);
+                saveConfigData();
+                renderUsuarios();
+            }
+        }
+
+        // Gerenciar Listas Suspensas
+        function adicionarItemLista(lista, inputId) {
+            const input = document.getElementById(inputId);
+            const valor = input.value.trim();
+            
+            if (!valor) return;
+            
+            if (!listasSuspensas[lista].includes(valor)) {
+                listasSuspensas[lista].push(valor);
+                saveConfigData();
+                renderLista(lista);
+            }
+            
+            input.value = '';
+        }
+
+        function removerItemLista(lista, valor) {
+            listasSuspensas[lista] = listasSuspensas[lista].filter(v => v !== valor);
+            saveConfigData();
+            renderLista(lista);
+        }
+
+        function renderLista(lista) {
+            const containerId = 'lista' + lista.charAt(0).toUpperCase() + lista.slice(1);
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = listasSuspensas[lista].map(item => `
+                <li class="flex items-center justify-between bg-white px-3 py-2 rounded border">
+                    <span class="text-sm">${item}</span>
+                    <button onclick="removerItemLista('${lista}', '${item}')" class="text-red-500 hover:text-red-700 text-sm">✕</button>
+                </li>
+            `).join('');
+        }
+
+        function renderTodasListas() {
+            Object.keys(listasSuspensas).forEach(lista => renderLista(lista));
+        }
+
+        // Gerenciar Clientes
+        function adicionarCliente() {
+            const nome = document.getElementById('novoClienteNome').value.trim();
+            const doc = document.getElementById('novoClienteDoc').value.trim();
+            const tel = document.getElementById('novoClienteTel').value.trim();
+            
+            if (!nome) {
+                alert('Informe o nome do cliente!');
+                return;
+            }
+            
+            clientes.push({
+                id: Date.now().toString(),
+                nome,
+                documento: doc,
+                telefone: tel
+            });
+            
+            saveConfigData();
+            renderClientes();
+            
+            document.getElementById('novoClienteNome').value = '';
+            document.getElementById('novoClienteDoc').value = '';
+            document.getElementById('novoClienteTel').value = '';
+        }
+
+        function renderClientes() {
+            const tbody = document.getElementById('listaClientes');
+            tbody.innerHTML = clientes.map(c => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3">${c.nome}</td>
+                    <td class="px-4 py-3">${c.documento || '-'}</td>
+                    <td class="px-4 py-3">${c.telefone || '-'}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="excluirCliente('${c.id}')" class="text-red-600 hover:text-red-800">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function excluirCliente(clienteId) {
+            if (confirm('Tem certeza que deseja excluir este cliente?')) {
+                clientes = clientes.filter(c => c.id !== clienteId);
+                saveConfigData();
+                renderClientes();
+            }
+        }
+
+        // Verificar permissões
+        function temPermissao(permissao) {
+            // Se não há usuário logado, bloqueia tudo (precisa fazer login)
+            if (!currentUser) return false;
+            // Admin tem todas as permissões
+            if (currentUser.isAdmin) return true;
+            // Verifica permissão específica do usuário
+            return currentUser.permissoes && currentUser.permissoes[permissao] === true;
+        }
+
+        // Função para atualizar visibilidade das abas baseado nas permissões
+        function atualizarVisibilidadeAbas() {
+            // Primeiro, mostrar todas as abas
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.display = '';
+            });
+            
+            // Se é admin, mostra tudo
+            if (currentUser && currentUser.isAdmin) {
+                return;
+            }
+            
+            // Para usuários com permissões limitadas, ajusta a visibilidade
+            // Dimensionamento, Orçamento e Relatórios sempre visíveis
+            
+            // Cadastrar Bomba - precisa de permissão alterarBombas
+            const tabCadastrar = document.querySelector('[data-tab="cadastrar"]');
+            if (tabCadastrar) {
+                tabCadastrar.style.display = temPermissao('alterarBombas') ? '' : 'none';
+            }
+            
+            // Lista de Bombas - precisa de permissão alterarBombas OU excluirBombas
+            const tabLista = document.querySelector('[data-tab="lista"]');
+            if (tabLista) {
+                tabLista.style.display = (temPermissao('alterarBombas') || temPermissao('excluirBombas')) ? '' : 'none';
+            }
+            
+            // Configurações - só admin
+            const tabConfig = document.querySelector('[data-tab="configuracoes"]');
+            if (tabConfig) {
+                tabConfig.style.display = (currentUser && currentUser.isAdmin) ? '' : 'none';
+            }
+        }
+
+        // Inicializar configurações
+        loadConfigData();
     </script>
 </body>
 </html>
